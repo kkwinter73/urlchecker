@@ -53,3 +53,17 @@ func TestCheckAll(t *testing.T) {
 	}
 
 }
+
+func TestCheck_Timeout(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(3 * time.Second)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	result := Check(server.URL, 1*time.Second)
+
+	if result.Err == nil {
+		t.Error("タイムアウトエラーが返るべき")
+	}
+}

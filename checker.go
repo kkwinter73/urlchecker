@@ -26,12 +26,13 @@ func Check(url string, timeout time.Duration) Result {
 	start := time.Now()
 
 	// タイムアウト付きのコンテキストを作る
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	// contextを使ってリクエストを組み立てる
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
+		return Result{URL: url, Err: err}
 	}
 
 	// リクエストを送信する
