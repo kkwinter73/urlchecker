@@ -10,6 +10,7 @@ import (
 
 func main() {
 	urlsFlag := flag.String("urls", "", "チェックするURL（カンマ区切り）")
+	timeoutFlag := flag.Int("timeout", 10, "タイムアウト秒数")
 	flag.Parse()
 
 	if *urlsFlag == "" {
@@ -20,7 +21,10 @@ func main() {
 	urls := strings.Split(*urlsFlag, ",")
 
 	start := time.Now()
-	results := CheckAll(urls)
+
+	timeout := time.Duration(*timeoutFlag) * time.Second
+
+	results := CheckAll(urls, timeout)
 	total := time.Since(start)
 
 	for _, r := range results {

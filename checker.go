@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -21,10 +22,21 @@ func (r Result) String() string {
 	return fmt.Sprintf("[OK] %s -> %d (%.2fs)", r.URL, r.StatusCode, r.Duration.Seconds())
 }
 
-func Check(url string) Result {
+func Check(url string, timeout time.Duration) Result {
 	start := time.Now()
 
-	resp, err := http.Get(url)
+	// タイムアウト付きのコンテキストを作る
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// contextを使ってリクエストを組み立てる
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+	}
+
+	// リクエストを送信する
+	resp, err := http.DefaultClient.Do(req)
+
 	duration := time.Since(start)
 
 	if err != nil {
@@ -40,7 +52,7 @@ func Check(url string) Result {
 	}
 }
 
-func CheckAll(urls []string) []Result {
+func CheckAll(urls []string, timeout time.Duration) []Result {
 	results := make([]Result, len(urls)) // makeで長さ固定のスライスを作る。最初から長さを固定しているのはあとからアクセスしやすいようにするため
 
 	// channelの作成 - 平衡実行されるgoroutine間を接続するパイプ的な
@@ -60,7 +72,7 @@ func CheckAll(urls []string) []Result {
 			ch <- struct {
 				index  int
 				result Result
-			}{index, Check(u)} // Check(U)でurlにアクセスしてResultを得る
+			}{index, Check(u, timeout)} // Check(U)でurlにアクセスしてResultを得る
 		}(i, url)
 	}
 

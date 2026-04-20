@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestCheck_Success(t *testing.T) {
@@ -14,7 +15,7 @@ func TestCheck_Success(t *testing.T) {
 
 	defer server.Close()
 
-	result := Check(server.URL)
+	result := Check(server.URL, 5*time.Second)
 
 	if result.Err != nil {
 		t.Errorf("エラーが発生: %v", result.Err)
@@ -25,7 +26,7 @@ func TestCheck_Success(t *testing.T) {
 }
 
 func TestCheck_InvalidURL(t *testing.T) {
-	result := Check("http://this-domain-does-not-exist-xxxxx.invalid")
+	result := Check("http://this-domain-does-not-exist-xxxxx.invalid", 5*time.Second)
 
 	if result.Err == nil {
 		t.Error("エラーが返るべき")
@@ -40,7 +41,7 @@ func TestCheckAll(t *testing.T) {
 	defer server.Close()
 
 	urls := []string{server.URL, server.URL, server.URL}
-	results := CheckAll(urls)
+	results := CheckAll(urls, 5*time.Second)
 
 	if len(results) != 3 {
 		t.Errorf("結果が3件返るべき, 実際 %d件", len(results))
