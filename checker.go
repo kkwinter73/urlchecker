@@ -41,21 +41,31 @@ func Check(url string) Result {
 }
 
 func CheckAll(urls []string) []Result {
-	results := make([]Result, len(urls))
-	ch := make(chan struct {
+	results := make([]Result, len(urls)) // makeで長さ固定のスライスを作る。最初から長さを固定しているのはあとからアクセスしやすいようにするため
+
+	// channelの作成 - 平衡実行されるgoroutine間を接続するパイプ的な
+	// 並行実行している関数から値を受信する
+	// （あるgoroutineから別のgoroutineに値を渡す）
+	// make(chan 型)で新しいチャネルを作成できる
+	// channel <- 構文で、チャネルへ値を 送信 します。
+	// <-channel 構文で、チャネルから値を 受信 します
+	ch := make(chan struct { // 匿名構造体：GOは型システムが厳格なため構造体で書く必要がある
 		index  int
 		result Result
-	}, len(urls))
+	}, len(urls)) // バッファ容量 len(urls）のチャネル：今回はN個おくることがわかってるので、バッファをその分もたせることで、全goroutineが受信をまたずにサクッと終了できる
 
 	for i, url := range urls {
+		// goroutine の起動
 		go func(index int, u string) {
 			ch <- struct {
 				index  int
 				result Result
-			}{index, Check(u)}
+			}{index, Check(u)} // Check(U)でurlにアクセスしてResultを得る
 		}(i, url)
 	}
 
+	// goroutineは並行実行なので完了順がバラバラ
+	// URLの元の順番に結果を並べたいならindexを一緒に送って、添え字で正しい場所に格納する
 	for range urls {
 		r := <-ch
 		results[r.index] = r.result
