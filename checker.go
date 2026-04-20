@@ -53,7 +53,7 @@ func Check(url string, timeout time.Duration) Result {
 	}
 }
 
-func CheckAll(urls []string, timeout time.Duration) []Result {
+func CheckAll(urls []string, timeout time.Duration, concurrency int) []Result {
 	results := make([]Result, len(urls)) // makeで長さ固定のスライスを作る。最初から長さを固定しているのはあとからアクセスしやすいようにするため
 
 	// channelの作成 - 平衡実行されるgoroutine間を接続するパイプ的な
@@ -67,9 +67,15 @@ func CheckAll(urls []string, timeout time.Duration) []Result {
 		result Result
 	}, len(urls)) // バッファ容量 len(urls）のチャネル：今回はN個おくることがわかってるので、バッファをその分もたせることで、全goroutineが受信をまたずにサクッと終了できる
 
+	sem := make(chan struct{}, concurrency)
+
 	for i, url := range urls {
+
 		// goroutine の起動
 		go func(index int, u string) {
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
 			ch <- struct {
 				index  int
 				result Result

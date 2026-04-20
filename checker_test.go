@@ -41,7 +41,7 @@ func TestCheckAll(t *testing.T) {
 	defer server.Close()
 
 	urls := []string{server.URL, server.URL, server.URL}
-	results := CheckAll(urls, 5*time.Second)
+	results := CheckAll(urls, 5*time.Second, 3)
 
 	if len(results) != 3 {
 		t.Errorf("結果が3件返るべき, 実際 %d件", len(results))
